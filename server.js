@@ -11,6 +11,13 @@ app.get("/", (req, res) => {
     });
 });
 
-app.listen(PORT, () => {
+app.get("/ping", (req, res) => {
+    res.json({
+        command: "ping",
+        response: "pong"
+    });
+});
+
+app.listen(PORT, "0.0.0.0", () => {
     console.log(`Solemn running on port ${PORT}`);
 });
