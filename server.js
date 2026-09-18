@@ -73,7 +73,53 @@ app.post("/workspace/upload", upload.single("file"), async (req, res) => {
     });
   }
 });
+// Solemn command endpoint
+app.post("/command", async (req, res) => {
+  try {
+    const { command } = req.body;
 
+    if (!command || !command.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: "Command is required",
+      });
+    }
+
+    const { data: files, error } = await supabase.storage
+      .from("SolemnAI-files")
+      .list("test", {
+        limit: 100,
+        offset: 0,
+        sortBy: {
+          column: "created_at",
+          order: "desc",
+        },
+      });
+
+    if (error) {
+      console.error("Workspace lookup error:", error);
+
+      return res.status(500).json({
+        success: false,
+        error: "Could not access Solemn Workspace",
+      });
+    }
+
+    res.json({
+      success: true,
+      command,
+      files,
+      message: `Solemn received your command: "${command}"`,
+    });
+  } catch (error) {
+    console.error("Command error:", error);
+
+    res.status(500).json({
+      success: false,
+      error: "Command failed",
+    });
+  }
+});
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Solemn running on port ${PORT}`);
 });
