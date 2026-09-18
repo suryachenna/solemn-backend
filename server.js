@@ -77,3 +77,37 @@ app.post("/workspace/upload", upload.single("file"), async (req, res) => {
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Solemn running on port ${PORT}`);
 });
+// List files in Solemn Workspace
+app.get("/workspace/files", async (req, res) => {
+  try {
+    const { data, error } = await supabase.storage
+      .from("SolemnAI-files")
+      .list("test", {
+        limit: 100,
+        offset: 0,
+        sortBy: {
+          column: "created_at",
+          order: "desc",
+        },
+      });
+
+    if (error) {
+      console.error("Supabase list error:", error);
+
+      return res.status(500).json({
+        error: "Failed to list workspace files",
+      });
+    }
+
+    res.json({
+      success: true,
+      files: data,
+    });
+  } catch (error) {
+    console.error("Workspace files error:", error);
+
+    res.status(500).json({
+      error: "Failed to get workspace files",
+    });
+  }
+});
