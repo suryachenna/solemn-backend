@@ -3,6 +3,7 @@ const multer = require("multer");
 const { createClient } = require("@supabase/supabase-js");
 
 const app = express();
+app.use(express.json());
 const PORT = process.env.PORT || 3000;
 
 // Supabase
