@@ -1,3 +1,4 @@
+const fs = require("fs");
 const express = require("express");
 const multer = require("multer");
 const { createClient } = require("@supabase/supabase-js");
@@ -6,9 +7,13 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Supabase
+const supabaseSecretKey = fs
+  .readFileSync("/etc/secrets/SUPABASE_SECRET_KEY", "utf8")
+  .trim();
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SECRET_KEY
+  supabaseSecretKey
 );
 
 // File uploads stay in memory temporarily
