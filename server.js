@@ -172,39 +172,6 @@ try {
   });
 }
 
-sendSmtpEmail.sender = {
-  email: process.env.BREVO_FROM_EMAIL,
-  name: "Solemn AI",
-};
-
-sendSmtpEmail.to = [
-  {
-    email: recipient,
-  },
-];
-
-sendSmtpEmail.subject = `File from Solemn: ${filename}`;
-sendSmtpEmail.textContent = "Sent automatically by Solemn AI agent.";
-
-sendSmtpEmail.attachment = [
-  {
-    name: filename,
-    content: buffer.toString("base64"),
-  },
-];
-
-try {
-  await apiInstance.sendTransacEmail(sendSmtpEmail);
-} catch (error) {
-  console.error("Brevo error:", error);
-
-  return res.status(500).json({
-    success: false,
-    error: error.message,
-  });
-}
-
-
       return res.json({
         success: true,
         message: `✅ ${filename} was sent to ${recipient}`,
