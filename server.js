@@ -1,6 +1,6 @@
 const express = require("express");
 const multer = require("multer");
-const { Resend } = require("resend");
+const brevo = require("@getbrevo/brevo");
 const { createClient } = require("@supabase/supabase-js");
 
 const app = express();
@@ -12,7 +12,6 @@ const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SECRET_KEY
 );
-const resend = new Resend(process.env.RESEND_API_KEY);
 // File uploads stay in memory temporarily
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -140,25 +139,44 @@ app.post("/command", async (req, res) => {
 
       const buffer = Buffer.from(await fileData.arrayBuffer());
 
-const { data, error } = await resend.emails.send({
-  from: process.env.RESEND_FROM_EMAIL,
-  to: [recipient],
-  subject: `File from Solemn: ${filename}`,
-  text: "Sent automatically by Solemn AI agent.",
-  attachments: [
-    {
-      filename,
-      content: buffer.toString("base64"),
-    },
-  ],
-});
+const apiInstance = new brevo.TransactionalEmailsApi();
 
-if (error) {
-  console.error("Resend error:", error);
+apiInstance.setApiKey(
+  brevo.TransactionalEmailsApiApiKeys.apiKey,
+  process.env.BREVO_API_KEY
+);
+
+const sendSmtpEmail = new brevo.SendSmtpEmail();
+
+sendSmtpEmail.sender = {
+  email: process.env.BREVO_FROM_EMAIL,
+  name: "Solemn AI",
+};
+
+sendSmtpEmail.to = [
+  {
+    email: recipient,
+  },
+];
+
+sendSmtpEmail.subject = `File from Solemn: ${filename}`;
+sendSmtpEmail.textContent = "Sent automatically by Solemn AI agent.";
+
+sendSmtpEmail.attachment = [
+  {
+    name: filename,
+    content: buffer.toString("base64"),
+  },
+];
+
+try {
+  await apiInstance.sendTransacEmail(sendSmtpEmail);
+} catch (error) {
+  console.error("Brevo error:", error);
 
   return res.status(500).json({
     success: false,
-error: error.message,
+    error: error.message,
   });
 }
 
