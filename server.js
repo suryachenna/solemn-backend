@@ -114,8 +114,9 @@ app.post("/command", async (req, res) => {
         });
       }
 
-      const file = files.find((item) => item.name === filename);
-
+const file = files.find(
+  (file) => file.name === filename || file.name.endsWith(`-${filename}`)
+);
       if (!file) {
         return res.status(404).json({
           success: false,
