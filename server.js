@@ -124,7 +124,7 @@ const file = files.find(
         });
       }
 
-      const storagePath = `test/${filename}`;
+      const storagePath = `test/${file.name}`;
 
       const { data: fileData, error: downloadError } = await supabase.storage
         .from("SolemnAI-files")
