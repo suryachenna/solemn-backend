@@ -158,9 +158,10 @@ if (error) {
 
   return res.status(500).json({
     success: false,
-    error: "Failed to send email",
+error: error.message,
   });
 }
+
 
       return res.json({
         success: true,
