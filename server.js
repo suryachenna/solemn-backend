@@ -1,5 +1,6 @@
 const express = require("express");
 const multer = require("multer");
+const nodemailer = require("nodemailer");
 const { createClient } = require("@supabase/supabase-js");
 
 const app = express();
@@ -83,6 +84,85 @@ app.post("/command", async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Command is required",
+      });
+    }
+
+    const sendMatch = command.match(
+      /^send\s+(.+?)\s+to\s+gmail\s+([^\s]+)$/i
+    );
+
+    if (sendMatch) {
+      const filename = sendMatch[1].trim();
+      const recipient = sendMatch[2].trim();
+
+      const { data: files, error: listError } = await supabase.storage
+        .from("SolemnAI-files")
+        .list("test", {
+          limit: 100,
+          offset: 0,
+          sortBy: {
+            column: "created_at",
+            order: "desc",
+          },
+        });
+
+      if (listError) {
+        console.error("Workspace lookup error:", listError);
+        return res.status(500).json({
+          success: false,
+          error: "Could not access Solemn Workspace",
+        });
+      }
+
+      const file = files.find((item) => item.name === filename);
+
+      if (!file) {
+        return res.status(404).json({
+          success: false,
+          error: `File "${filename}" was not found in Solemn Workspace`,
+        });
+      }
+
+      const storagePath = `test/${filename}`;
+
+      const { data: fileData, error: downloadError } = await supabase.storage
+        .from("SolemnAI-files")
+        .download(storagePath);
+
+      if (downloadError) {
+        console.error("File download error:", downloadError);
+        return res.status(500).json({
+          success: false,
+          error: "Could not retrieve file from Solemn Workspace",
+        });
+      }
+
+      const buffer = Buffer.from(await fileData.arrayBuffer());
+
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.SOLEMN_GMAIL_ADDRESS,
+          pass: process.env.SOLEMN_GMAIL_APP_PASSWORD,
+        },
+      });
+
+      await transporter.sendMail({
+        from: process.env.SOLEMN_GMAIL_ADDRESS,
+        to: recipient,
+        subject: `File from Solemn: ${filename}`,
+        text: "Sent automatically by Solemn AI agent.",
+        attachments: [
+          {
+            filename,
+            content: buffer,
+          },
+        ],
+      });
+
+      return res.json({
+        success: true,
+        message: `✅ ${filename} was sent to ${recipient}`,
       });
     }
 
