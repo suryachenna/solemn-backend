@@ -124,11 +124,24 @@ const file = files.find(
         });
       }
 
-      const storagePath = `test/${file.name}`;
+    const storagePath = `test/${file.name}`;
 
-      const { data: fileData, error: downloadError } = await supabase.storage
-        .from("SolemnAI-files")
-        .download(storagePath);
+console.log("Downloading from Solemn Workspace:", storagePath);
+
+const { data: fileData, error: downloadError } = await supabase.storage
+  .from("SolemnAI-files")
+  .download(storagePath);
+
+if (downloadError) {
+  console.error("File download error:", downloadError);
+  console.error("Requested storage path:", storagePath);
+
+  return res.status(500).json({
+    success: false,
+    error: "Could not retrieve file from Solemn Workspace",
+    path: storagePath,
+  });
+}
 
       if (downloadError) {
         console.error("File download error:", downloadError);
