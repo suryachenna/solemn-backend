@@ -1,6 +1,6 @@
 const express = require("express");
 const multer = require("multer");
-const brevo = require("@getbrevo/brevo");
+const { BrevoClient } = require("@getbrevo/brevo");
 const { createClient } = require("@supabase/supabase-js");
 
 const app = express();
@@ -139,14 +139,38 @@ app.post("/command", async (req, res) => {
 
       const buffer = Buffer.from(await fileData.arrayBuffer());
 
-const apiInstance = new brevo.TransactionalEmailsApi();
+const brevoClient = new BrevoClient({
+  apiKey: process.env.BREVO_API_KEY,
+});
 
-apiInstance.setApiKey(
-  brevo.TransactionalEmailsApiApiKeys.apiKey,
-  process.env.BREVO_API_KEY
-);
+try {
+  await brevoClient.transactionalEmails.sendTransacEmail({
+    sender: {
+      email: process.env.BREVO_FROM_EMAIL,
+      name: "Solemn AI",
+    },
+    to: [
+      {
+        email: recipient,
+      },
+    ],
+    subject: `File from Solemn: ${filename}`,
+    textContent: "Sent automatically by Solemn AI agent.",
+    attachment: [
+      {
+        name: filename,
+        content: buffer.toString("base64"),
+      },
+    ],
+  });
+} catch (error) {
+  console.error("Brevo error:", error);
 
-const sendSmtpEmail = new brevo.SendSmtpEmail();
+  return res.status(500).json({
+    success: false,
+    error: error.message,
+  });
+}
 
 sendSmtpEmail.sender = {
   email: process.env.BREVO_FROM_EMAIL,
