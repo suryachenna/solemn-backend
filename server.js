@@ -1,6 +1,6 @@
 const express = require("express");
 const multer = require("multer");
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 const { createClient } = require("@supabase/supabase-js");
 
 const app = express();
@@ -12,6 +12,7 @@ const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SECRET_KEY
 );
+const resend = new Resend(process.env.RESEND_API_KEY);
 // File uploads stay in memory temporarily
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -139,26 +140,27 @@ app.post("/command", async (req, res) => {
 
       const buffer = Buffer.from(await fileData.arrayBuffer());
 
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: process.env.SOLEMN_GMAIL_ADDRESS,
-          pass: process.env.SOLEMN_GMAIL_APP_PASSWORD,
-        },
-      });
+const { data, error } = await resend.emails.send({
+  from: process.env.RESEND_FROM_EMAIL,
+  to: [recipient],
+  subject: `File from Solemn: ${filename}`,
+  text: "Sent automatically by Solemn AI agent.",
+  attachments: [
+    {
+      filename,
+      content: buffer.toString("base64"),
+    },
+  ],
+});
 
-      await transporter.sendMail({
-        from: process.env.SOLEMN_GMAIL_ADDRESS,
-        to: recipient,
-        subject: `File from Solemn: ${filename}`,
-        text: "Sent automatically by Solemn AI agent.",
-        attachments: [
-          {
-            filename,
-            content: buffer,
-          },
-        ],
-      });
+if (error) {
+  console.error("Resend error:", error);
+
+  return res.status(500).json({
+    success: false,
+    error: "Failed to send email",
+  });
+}
 
       return res.json({
         success: true,
