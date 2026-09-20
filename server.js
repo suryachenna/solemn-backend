@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
+const sharp = require("sharp");
 const { BrevoClient } = require("@getbrevo/brevo");
 const { createClient } = require("@supabase/supabase-js");
 
@@ -154,6 +155,19 @@ if (downloadError) {
       }
 
       const buffer = Buffer.from(await fileData.arrayBuffer());
+      let attachmentBuffer = buffer;
+let attachmentName = filename;
+
+if (filename.toLowerCase().endsWith(".webp")) {
+  console.log("Converting WEBP to PNG:", filename);
+
+  attachmentBuffer = await sharp(buffer)
+    .png()
+    .toBuffer();
+
+  attachmentName =
+    filename.slice(0, filename.lastIndexOf(".")) + ".png";
+}
 
 const brevoClient = new BrevoClient({
   apiKey: process.env.BREVO_API_KEY,
@@ -172,12 +186,12 @@ try {
     ],
     subject: `File from Solemn: ${filename}`,
     textContent: "Sent automatically by Solemn AI agent.",
-    attachment: [
-      {
-        name: filename,
-        content: buffer.toString("base64"),
-      },
-    ],
+  attachment: [
+  {
+    name: attachmentName,
+    content: attachmentBuffer.toString("base64"),
+  },
+],
   });
 } catch (error) {
   console.error("Brevo error:", error);
