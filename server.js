@@ -245,16 +245,41 @@ app.get("/workspace/files", async (req, res) => {
           order: "desc",
         },
       });
-      app.delete("/workspace/files", async (req, res) => {
-  try {
-    const { paths } = req.body;
 
-    if (!Array.isArray(paths) || paths.length === 0) {
-      return res.status(400).json({
+    if (error) {
+      console.error("Supabase list error:", error);
+
+      return res.status(500).json({
         success: false,
-        error: "No files specified",
+        error: "Failed to list workspace files",
       });
     }
+
+    const files = (data || []).map((file) => ({
+      name: file.name,
+      path: `test/${file.name}`,
+      size: Number(file.metadata?.size || 0),
+      mimetype:
+        file.metadata?.mimetype ||
+        file.metadata?.mimetype ||
+        "application/octet-stream",
+      created_at: file.created_at,
+      updated_at: file.updated_at,
+    }));
+
+    res.json({
+      success: true,
+      files: files,
+    });
+  } catch (error) {
+    console.error("Workspace files error:", error);
+
+    res.status(500).json({
+      success: false,
+      error: "Failed to get workspace files",
+    });
+  }
+});
 
     const { error } = await supabase.storage
       .from("SolemnAI-files")
