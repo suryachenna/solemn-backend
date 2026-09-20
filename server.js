@@ -47,8 +47,12 @@ app.post("/workspace/upload", upload.single("file"), async (req, res) => {
       });
     }
 
-    const filePath = `test/${Date.now()}-${req.file.originalname}`;
+const safeFilename = req.file.originalname.replace(
+  /[^a-zA-Z0-9._-]/g,
+  "_"
+);
 
+const filePath = `test/${Date.now()}-${safeFilename}`;
     const { error } = await supabase.storage
       .from("SolemnAI-files")
       .upload(filePath, req.file.buffer, {
