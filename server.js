@@ -370,12 +370,3 @@ app.get("/workspace/files", async (req, res) => {
     });
   }
 });
-
-    if (error) {
-      console.error("Supabase list error:", error);
-
-      return res.status(500).json({
-        error: "Failed to list workspace files",
-      });
-    }
-
