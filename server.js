@@ -245,6 +245,44 @@ app.get("/workspace/files", async (req, res) => {
           order: "desc",
         },
       });
+      app.delete("/workspace/files", async (req, res) => {
+  try {
+    const { paths } = req.body;
+
+    if (!Array.isArray(paths) || paths.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "No files specified",
+      });
+    }
+
+    const { error } = await supabase.storage
+      .from("SolemnAI-files")
+      .remove(paths);
+
+    if (error) {
+      console.error("Supabase delete error:", error);
+
+      return res.status(500).json({
+        success: false,
+        error: "Failed to delete files from Solemn Workspace",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Files permanently removed from Solemn Workspace",
+      deleted: paths,
+    });
+  } catch (error) {
+    console.error("Workspace delete error:", error);
+
+    res.status(500).json({
+      success: false,
+      error: "Workspace deletion failed",
+    });
+  }
+});
 
     if (error) {
       console.error("Supabase list error:", error);
