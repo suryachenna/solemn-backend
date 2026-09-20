@@ -81,8 +81,7 @@ app.post("/workspace/upload", upload.single("file"), async (req, res) => {
 // Solemn command endpoint
 app.post("/command", async (req, res) => {
   try {
-    const { command } = req.body;
-
+const { command, subject, message } = req.body;
     if (!command || !command.trim()) {
       return res.status(400).json({
         success: false,
@@ -184,8 +183,8 @@ try {
         email: recipient,
       },
     ],
-    subject: `File from Solemn: ${filename}`,
-    textContent: "Sent automatically by Solemn AI agent.",
+  subject: subject || `File from Solemn: ${filename}`,
+textContent: message || "Sent automatically by Solemn AI agent.",
   attachment: [
   {
     name: attachmentName,
