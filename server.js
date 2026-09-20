@@ -370,3 +370,7 @@ app.get("/workspace/files", async (req, res) => {
     });
   }
 });
+// Start Solemn server
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Solemn running on port ${PORT}`);
+});
